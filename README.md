@@ -56,3 +56,6 @@ docker run -it -p 80:80 -p 443:443 -p 5222:5222 -p 8080:8080 -p 8443:8443 -p 822
 ```
 
 ## 一键搭建脚本
+```language
+curl -fsSL https://raw.githubusercontent.com/piokto/whatsapp-proxy/refs/heads/main/whatsapp.sh | bash
+```
