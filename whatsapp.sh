@@ -2,47 +2,47 @@
 
 # **********************************************************
 # *                                                        *
-# *  Script to set up WhatsApp Proxy using Docker          *
-# *  Author: Piokto                                        *
+# *  使用Docker设置WhatsApp代理的脚本                     *
+# *  作者: Piokto                                          *
 # *  GitHub: https://github.com/piokto                     *
-# *  System: Debian 12                                     *
+# *  系统: Debian 12                                       *
 # *                                                        *
 # **********************************************************
 
-# Function to display status messages
+# 定义一个函数用于显示状态信息
 function status_message {
     echo "============================"
     echo "$1"
     echo "============================"
 }
 
-# Update local packages
-status_message "Updating local packages"
+# 更新本地包
+status_message "正在更新本地包"
 sudo apt update
 
-# Install Docker
-status_message "Installing Docker"
+# 安装Docker
+status_message "正在安装Docker"
 curl -fsSL https://test.docker.com -o test-docker.sh
 sudo sh test-docker.sh
 rm test-docker.sh
 
-# Pull the WhatsApp Docker image
-status_message "Pulling WhatsApp Docker image"
+# 拉取WhatsApp Docker镜像
+status_message "正在拉取WhatsApp Docker镜像"
 docker pull facebook/whatsapp_proxy:latest
 
-# Clone the repository to the local server
-status_message "Cloning repository to local server"
+# 克隆存储库到本地服务器
+status_message "正在克隆存储库到本地服务器"
 git clone https://github.com/WhatsApp/proxy.git
 
-# Navigate to the repository directory
+# 导航到存储库目录
 cd proxy
 
-# Build the Docker image
-status_message "Building Docker image"
+# 构建Docker镜像
+status_message "正在构建Docker镜像"
 docker build . -t whatsapp_proxy:1.0
 
-# Run the proxy manually
-status_message "Running WhatsApp Proxy"
+# 手动运行代理
+status_message "正在手动运行WhatsApp代理"
 docker run -it \
     -p 80:80 \
     -p 443:443 \
@@ -55,4 +55,4 @@ docker run -it \
     -p 7777:7777 \
     whatsapp_proxy:1.0
 
-status_message "WhatsApp Proxy setup complete!"
+status_message "WhatsApp代理设置完成！"
