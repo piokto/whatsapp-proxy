@@ -5,7 +5,7 @@
 # *  使用Docker设置WhatsApp代理的脚本                     *
 # *  作者: Piokto                                          *
 # *  GitHub: https://github.com/piokto                     *
-# *  TG:https://t.me/caryan                                      *
+# *  系统: Debian 12                                       *
 # *                                                        *
 # **********************************************************
 
@@ -26,26 +26,45 @@ function status_message {
 status_message "正在更新本地包"
 sudo apt update
 
-# 安装Docker
-status_message "正在安装Docker"
-curl -fsSL https://test.docker.com -o test-docker.sh
-sudo sh test-docker.sh
-rm test-docker.sh
+# 检测Docker是否已安装
+if ! command -v docker &> /dev/null
+then
+    status_message "Docker未安装，正在安装Docker"
+    curl -fsSL https://test.docker.com -o test-docker.sh
+    sudo sh test-docker.sh
+    rm test-docker.sh
+else
+    status_message "Docker已安装，跳过安装步骤"
+fi
 
 # 拉取WhatsApp Docker镜像
-status_message "正在拉取WhatsApp Docker镜像"
-docker pull facebook/whatsapp_proxy:latest
+if ! docker image inspect facebook/whatsapp_proxy:latest &> /dev/null
+then
+    status_message "正在拉取WhatsApp Docker镜像"
+    docker pull facebook/whatsapp_proxy:latest
+else
+    status_message "WhatsApp Docker镜像已存在，跳过拉取步骤"
+fi
 
 # 克隆存储库到本地服务器
-status_message "正在克隆存储库到本地服务器"
-git clone https://github.com/WhatsApp/proxy.git
+if [ ! -d "proxy" ]; then
+    status_message "正在克隆存储库到本地服务器"
+    git clone https://github.com/WhatsApp/proxy.git
+else
+    status_message "存储库已存在，跳过克隆步骤"
+fi
 
 # 导航到存储库目录
 cd proxy
 
 # 构建Docker镜像
-status_message "正在构建Docker镜像"
-docker build . -t whatsapp_proxy:1.0
+if ! docker image inspect whatsapp_proxy:1.0 &> /dev/null
+then
+    status_message "正在构建Docker镜像"
+    docker build . -t whatsapp_proxy:1.0
+else
+    status_message "Docker镜像已存在，跳过构建步骤"
+fi
 
 # 手动运行代理
 status_message "正在手动运行WhatsApp代理"
