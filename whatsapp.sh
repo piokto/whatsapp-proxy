@@ -247,9 +247,9 @@ if [ ! -d "proxy" ]; then
     git clone https://github.com/WhatsApp/proxy.git || error_message "无法克隆WhatsApp代理存储库"
 else
     status_message "存储库已存在，正在更新"
-    cd proxy
+    cd proxy || error_message "无法进入proxy目录"
     git pull || error_message "无法更新WhatsApp代理存储库"
-    cd ..
+    cd .. || error_message "无法返回上级目录"
 fi
 
 # 导航到存储库目录
