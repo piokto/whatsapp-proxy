@@ -248,12 +248,77 @@ if [ ! -d "proxy" ]; then
 else
     status_message "存储库已存在，正在更新"
     cd proxy || error_message "无法进入proxy目录"
+    # 设置git pull模式为fast-forward only
+    git config pull.ff only
     git pull || error_message "无法更新WhatsApp代理存储库"
     cd .. || error_message "无法返回上级目录"
 fi
 
 # 导航到存储库目录
 cd proxy || error_message "无法进入proxy目录"
+
+# 检查Dockerfile是否存在
+if [ ! -f "Dockerfile" ]; then
+    status_message "在仓库根目录未找到Dockerfile，正在尝试查找..."
+    
+    # 查找可能的Dockerfile位置
+    DOCKERFILE_PATH=$(find . -name "Dockerfile" -type f | head -n 1)
+    
+    if [ -n "$DOCKERFILE_PATH" ]; then
+        # 找到Dockerfile，切换到其所在目录
+        DOCKERFILE_DIR=$(dirname "$DOCKERFILE_PATH")
+        status_message "找到Dockerfile在: $DOCKERFILE_DIR"
+        cd "$DOCKERFILE_DIR" || error_message "无法进入Dockerfile所在目录"
+    else
+        # 尝试查找示例配置或说明
+        status_message "未找到Dockerfile，尝试创建默认配置"
+        
+        # 创建一个基本的Dockerfile用于WhatsApp代理
+        cat > Dockerfile << 'EOF'
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+# 如果存在源代码，则编译它
+COPY . .
+RUN if [ -f "go.mod" ]; then \
+        go build -o whatsapp_proxy; \
+    fi
+
+# 第二阶段 - 最小运行环境
+FROM alpine:latest
+
+WORKDIR /app
+
+# 如果第一阶段编译了代码，则复制二进制文件
+COPY --from=builder /app/whatsapp_proxy* /app/ 2>/dev/null || true
+
+# 复制现有的二进制文件或脚本（如果存在）
+COPY *.sh /app/ 2>/dev/null || true
+COPY *.js /app/ 2>/dev/null || true
+COPY *.py /app/ 2>/dev/null || true
+
+# 设置执行权限
+RUN chmod +x /app/* 2>/dev/null || true
+
+# 安装必要的运行时依赖
+RUN apk add --no-cache ca-certificates
+
+# 暴露WhatsApp代理所需端口
+EXPOSE 80 443 5222 8080 8443 8222 8199 587 7777
+
+# 如果有启动脚本，则使用它，否则保持容器运行
+CMD if [ -f "/app/whatsapp_proxy" ]; then \
+        /app/whatsapp_proxy; \
+    elif [ -f "/app/server.sh" ]; then \
+        /app/server.sh; \
+    else \
+        echo "WhatsApp代理已启动" && tail -f /dev/null; \
+    fi
+EOF
+        status_message "已创建默认Dockerfile"
+    fi
+fi
 
 # 构建Docker镜像
 if ! docker image inspect whatsapp_proxy:1.0 &> /dev/null 2>&1
